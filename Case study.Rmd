@@ -1,0 +1,107 @@
+---
+title: "Case Study"
+author: "Sam McNeill"
+date: "2024-10-01"
+output: word_document
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(car)
+library(ggplot2)
+library(gridExtra)
+```
+
+## Introduction
+
+The purpose of this study is to create a mathematical model used to predict the amount of prize money a golfer will win based on variables characterizing her experience and past performances.
+This model will be constructed using data from 100 golfers featured in the Ladies Professional Golf Association.
+There are nine variables included in the data set, with "przrnd" being the variable of interest.
+
+"przrnd": This variable represents the amount of prize money won per round of the golfer's career (in American dollars and cents)
+
+With "przrnd" as our response variable, that leaves 8 other possible predictor variables:
+
+"Golfer": This variable holds a string with the name of each of the 100 golfers.
+This can be thought of as a categorical variable with each name as a different level.
+
+"rounds": This variable holds integers for the total number of rounds each golfer has played in their career.
+
+"avedist": This variable represents the average distance each golfer hits the ball with a driver in yards (typically used at the start of a hole or on long holes)
+
+"pctfrwy": Defined as the percent of fairways hit in the golfer's career, this variable generally indicates accuracy and control from the tee.
+
+"pctgrn": This variable tracks the percentage a golfer's ball reaches the putting surface in par minus two strokes or better.
+This variable generally indicates overall play from tee to green.
+
+"aveputt": Average number of putts a golfer takes in an 18-hole round.
+Lower numbers often indicate that a golfer is more efficient at putting or chipping in the ball.
+
+"avesand": This variable counts the number of times, on average, a golfer hits from a sand pit.
+Lower numbers typically indicate the golfer is avoiding sand traps.
+
+"pctsandsv": This variable measures how often a golfer gets the ball into the hole in two shots or less after hitting from a sand pit.
+This is calculated by the following equation: (Number of successful sand saves) / (Number of sand bunker shots) x 100
+
+In order to balance over and under fitting, we must find the most impactful predictor variables to include in our model.
+This will be done by creating summary statistics and graphics, and model fitting.
+
+## Summary Statistics and Graphics
+
+After thinking about the definition of each variable, none of them have practical negative values or zero points.
+The percentage variables will be left as is since they are already on an interpretable scale (0 - 100).
+Przrnd, rounds, avedist, aveputt, and avesand may need log transformations (if heavily skewed/have large outliers).
+Also, standardization would help to compare these non-percentage predictors since they are on different scales.
+Standardizing to a normal (0,1) would be easy, but allowing negative values does not make sense, and interpretation becomes difficult.
+Normalization may make sense since it would constrain all the data between 0 and 1 (essentially the same scale as the percentage variables), however interpretation then becomes an issue.
+Since interpretation becomes very difficult with both standardization and normalization, log transformations will be the only method used to restructure the data.
+
+```{r}
+# Read in the data and quickly inspect it
+data <- read.csv("C:/Users/sammc/OneDrive/Desktop/School/MAS/Fall 2024/Regression/Case Study 551/LPGA.csv")
+
+sum(is.na(data)) # No NAs
+
+str(data) # One character variable (Golfer)
+
+
+# "Golfer" is a vector of characters, so we need to convert to factors to create plots
+data$Golfer <- as.factor(data$Golfer)
+# Initial glance at relationships between variables
+scatterplotMatrix(data)
+
+
+# Check skewness (see if log transformations would be useful)
+variables <- c("rounds", "avedist", "aveputt", "avesand", "przrnd")
+
+par(mfrow=c(2, 2))
+for(var in variables) {
+  hist(data[[var]], main=paste("Histogram of", var), xlab="Value")
+}
+
+```
+
+It appears that avesand and our przrnd are right skewed.
+Przrnd is heavily right skewed and should definitely be log transformed in the models as is it our response variable.
+Avesand is less right skewed, and may or may not be useful in the model.
+Model comparison later will help identify if a log transform of avesand will produce a better model.
+
+Furthermore, there appears to be relationships between our response and predictors "rounds", "avedsit", "pctgrn", "aveputt" and maybe "avesand".
+The predictors "rounds", "avedsit", and "pctgrn" are all positive.
+In golf terms, golfers that have played more rounds, hit the ball further with a driver, or have a higher percent green tend to earn more money.
+Also, the negative relationship between the response and "aveputt" and "avesand" make sense in a golf perspective.
+Golfers that get the ball in the hole in fewer putts or hit less from in the sand tend to win more prize money.
+
+There also seems to be noticable interactions between rounds:avedist, rounds:pctgrn, rounds:aveputt, rounds:avgsand, avedist:pctgrn, and pctgrn:avesand.
+The predictors "rounds", "avedsit", "pctgrn", "aveputt" and "avesand" (along with their interactions) will be considered for fitting and evaluation in future models.
+
+## Analysis
+
+Description/discussion of analysis with enough detail that someone else could recreate your results.
+• You are encouraged to try different approaches, but please restrict yourselves to the methods we have covered in this class (no other methods, such as loess or GLMs, should be used).
+• Justify any choices that you made as part of the analysis.
+• Discuss model assumptions and include diagnostic checks (plots and quantitative checks).
+• As you are working toward a final model, keep in mind all that we have covered (checking model assumptions, transformations, etc).
